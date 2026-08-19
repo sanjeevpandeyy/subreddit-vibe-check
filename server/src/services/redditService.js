@@ -21,17 +21,29 @@ function cleanSubredditName(subreddit) {
 }
 
 function getMockPosts(subreddit) {
-  return Array.from({ length: 50 }, (_, index) => ({
-    id: `mock-${index + 1}`,
-    title: DEMO_POSTS[index % DEMO_POSTS.length],
-    score: 1000 - index * 13,
-    comments: 250 - index * 3,
-    author: `user_${index + 1}`,
-    subreddit,
-    url: `https://www.reddit.com/r/${subreddit}/comments/mock-${index + 1}/demo-post-${index + 1}/`,
-    createdAt: Date.now() / 1000 - index * 3600,
-    thumbnail: "",
-  }));
+  return Array.from({ length: 50 }, (_, index) => {
+    const baseTitle = DEMO_POSTS[index % DEMO_POSTS.length];
+
+    return {
+      id: `mock-${subreddit}-${index + 1}`,
+
+      title: `r/${subreddit}: ${baseTitle}`,
+
+      score: 1000 - index * 13,
+
+      comments: 250 - index * 3,
+
+      author: `user_${index + 1}`,
+
+      subreddit,
+
+      url: `https://www.reddit.com/r/${subreddit}/comments/mock-${index + 1}/`,
+
+      createdAt: Date.now() / 1000 - index * 3600,
+
+      thumbnail: "",
+    };
+  });
 }
 
 function mapRedditPost(post) {
@@ -64,7 +76,7 @@ async function redditFetch(url) {
   const response = await fetch(url, {
     headers: {
       "User-Agent":
-        "reddit-sentiment-internship-app/1.0 by sanjeev-kumar-pandey",
+        "web:subreddit-vibe-check:v1.0 (by /u/sanjeevpandeyy)",
       Accept: "application/json",
     },
   });
@@ -97,7 +109,12 @@ export async function fetchHotPosts(subreddit) {
     throw error;
   }
 
-  // Keep mock mode for development/testing.
+  /*
+   * MOCK MODE
+   *
+   * Recommended for your current deployment because
+   * Reddit is returning 429/403 from the Render server.
+   */
   if (process.env.REDDIT_USE_MOCK === "true") {
     return getMockPosts(cleanSubreddit);
   }
@@ -107,11 +124,17 @@ export async function fetchHotPosts(subreddit) {
       `${REDDIT_BASE_URL}/r/${encodeURIComponent(cleanSubreddit)}` +
       `/hot.json?limit=50`;
 
+    console.log(`Fetching Reddit subreddit: r/${cleanSubreddit}`);
+
     const data = await redditFetch(url);
 
     if (!data?.data?.children) {
-      const error = new Error("Invalid response received from Reddit.");
+      const error = new Error(
+        "Invalid response received from Reddit."
+      );
+
       error.status = 502;
+
       throw error;
     }
 
@@ -142,9 +165,18 @@ export async function fetchPostById(postId) {
     throw error;
   }
 
-  // Mock mode
+  /*
+   * MOCK MODE
+   */
   if (process.env.REDDIT_USE_MOCK === "true") {
-    const index = parseInt(postId.replace("mock-", ""), 10);
+    const parts = postId.split("-");
+
+    const index = Number(parts[parts.length - 1]);
+
+    const subreddit =
+      parts.length > 2
+        ? parts.slice(1, -1).join("-")
+        : "programming";
 
     if (
       !Number.isInteger(index) ||
@@ -156,7 +188,7 @@ export async function fetchPostById(postId) {
       throw error;
     }
 
-    const posts = getMockPosts("programming");
+    const posts = getMockPosts(subreddit);
 
     return posts[index - 1];
   }
