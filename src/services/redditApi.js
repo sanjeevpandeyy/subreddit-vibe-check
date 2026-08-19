@@ -1,8 +1,8 @@
-const API_BASE_URL = "http://localhost:4000/api";
+const API_BASE_URL = "https://subreddit-vibe-check-d09z.onrender.com";
 
 export async function getHotPosts(subreddit) {
   const response = await fetch(
-    `${API_BASE_URL}/reddit/${encodeURIComponent(subreddit)}/hot`
+    `${API_BASE_URL}/api/reddit/${encodeURIComponent(subreddit)}/hot`
   );
 
   const data = await response.json();
@@ -16,7 +16,7 @@ export async function getHotPosts(subreddit) {
 
 export async function getPostById(id) {
   const response = await fetch(
-    `${API_BASE_URL}/reddit/post/${encodeURIComponent(id)}`
+    `${API_BASE_URL}/api/reddit/post/${encodeURIComponent(id)}`
   );
 
   const data = await response.json();
